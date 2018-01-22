@@ -1,23 +1,38 @@
 package main
 
 import (
+	"context"
+	"net/http"
 	"os"
 
-	"github.com/Sirupsen/logrus"
-	"github.com/urfave/cli"
+	"github.com/rancher/alerting-api/server"
+	"github.com/rancher/alerting-api/types/config"
+	"github.com/sirupsen/logrus"
+	"k8s.io/client-go/tools/clientcmd"
 )
 
-var VERSION = "v0.0.0-dev"
-
 func main() {
-	app := cli.NewApp()
-	app.Name = "alerting-api"
-	app.Version = VERSION
-	app.Usage = "You need help!"
-	app.Action = func(c *cli.Context) error {
-		logrus.Info("I'm a turkey")
-		return nil
+	if err := run(); err != nil {
+		panic(err)
+	}
+}
+
+func run() error {
+	kubeConfig, err := clientcmd.BuildConfigFromFlags("", os.Getenv("KUBECONFIG"))
+	if err != nil {
+		return err
 	}
 
-	app.Run(os.Args)
+	alert, err := config.NewAlertContext(*kubeConfig)
+	if err != nil {
+		return err
+	}
+
+	handler, err := server.New(context.Background(), alert)
+	if err != nil {
+		return err
+	}
+
+	logrus.Info("Listening on 0.0.0.0:8888")
+	return http.ListenAndServe("0.0.0.0:8888", handler)
 }
