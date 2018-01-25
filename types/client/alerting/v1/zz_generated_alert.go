@@ -6,6 +6,7 @@ import (
 
 const (
 	AlertType                 = "alert"
+	AlertFieldAlertState      = "alertState"
 	AlertFieldAnnotations     = "annotations"
 	AlertFieldCreated         = "created"
 	AlertFieldCreatorID       = "creatorId"
@@ -23,7 +24,6 @@ const (
 	AlertFieldRepeatInterval  = "repeatInterval"
 	AlertFieldSeverity        = "severity"
 	AlertFieldStartedAt       = "startedAt"
-	AlertFieldState           = "state"
 	AlertFieldTargetID        = "targetID"
 	AlertFieldTargetSelector  = "targetSelector"
 	AlertFieldTargetType      = "targetType"
@@ -33,6 +33,7 @@ const (
 
 type Alert struct {
 	types.Resource
+	AlertState      string            `json:"alertState,omitempty"`
 	Annotations     map[string]string `json:"annotations,omitempty"`
 	Created         string            `json:"created,omitempty"`
 	CreatorID       string            `json:"creatorId,omitempty"`
@@ -50,7 +51,6 @@ type Alert struct {
 	RepeatInterval  string            `json:"repeatInterval,omitempty"`
 	Severity        string            `json:"severity,omitempty"`
 	StartedAt       string            `json:"startedAt,omitempty"`
-	State           string            `json:"state,omitempty"`
 	TargetID        string            `json:"targetID,omitempty"`
 	TargetSelector  map[string]string `json:"targetSelector,omitempty"`
 	TargetType      string            `json:"targetType,omitempty"`

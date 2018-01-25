@@ -47,10 +47,11 @@ func alertingTypes(schemas *types.Schemas) *types.Schemas {
 				field.Nullable = false
 				return field
 			})
-			schema.MustCustomizeField("state", func(field types.Field) types.Field {
-				//field.Create = false
-				//field.Update = false
-				//field.Default = "active"
+
+			schema.MustCustomizeField("alertState", func(field types.Field) types.Field {
+				field.Create = false
+				field.Update = false
+				field.Default = "active"
 				field.Type = "enum"
 				field.Options = []string{"active", "inactive", "alerting", "muted"}
 

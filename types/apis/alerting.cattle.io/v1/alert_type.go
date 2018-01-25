@@ -23,10 +23,11 @@ type Alert struct {
 	TargetID       string            `json:"targetID,omitempty"`
 	TargetSelector map[string]string `json:"targetSelector,omitempty"`
 	StartedAt      string            `json:"startedAt,omitempty"`
-	State          string            `json:"state,omitempty"`
-	NodeRule       NodeRule          `json:"nodeRule,omitempty"`
-	PodRule        PodRule           `json:"podRule,omitempty"`
-	WorkloadRule   WorkloadRule      `json:"workloadRule,omitempty"`
+	//TODO: status/state not working
+	AlertState   string       `json:"alertState,omitempty"`
+	NodeRule     NodeRule     `json:"nodeRule,omitempty"`
+	PodRule      PodRule      `json:"podRule,omitempty"`
+	WorkloadRule WorkloadRule `json:"workloadRule,omitempty"`
 }
 
 //TODO: what node rule should we support

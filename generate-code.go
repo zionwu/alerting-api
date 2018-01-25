@@ -8,6 +8,6 @@ import (
 	alertSchema "github.com/rancher/alerting-api/types/apis/alerting.cattle.io/v1/schema"
 )
 
-func gen() {
+func generate() {
 	generator.Generate(alertSchema.Schemas)
 }

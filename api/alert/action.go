@@ -46,29 +46,29 @@ func (h *Handler) ActionHandler(actionName string, action *types.Action, request
 
 	switch actionName {
 	case "activate":
-		if alert.State == "inactive" {
-			alert.State = "active"
+		if alert.AlertState == "inactive" {
+			alert.AlertState = "active"
 		} else {
 			return errors.New("the alert state is not inactive")
 		}
 
 	case "deactivate":
-		if alert.State == "active" {
-			alert.State = "inactive"
+		if alert.AlertState == "active" {
+			alert.AlertState = "inactive"
 		} else {
 			return errors.New("the alert state is not active")
 		}
 
 	case "mute":
-		if alert.State == "alerting" {
-			alert.State = "muted"
+		if alert.AlertState == "alerting" {
+			alert.AlertState = "muted"
 		} else {
 			return errors.New("the alert state is not alerting")
 		}
 
 	case "unmute":
-		if alert.State == "muted" {
-			alert.State = "alerting"
+		if alert.AlertState == "muted" {
+			alert.AlertState = "alerting"
 		} else {
 			return errors.New("the alert state is not muted")
 		}
