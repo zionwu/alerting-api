@@ -101,6 +101,9 @@ func getTypeString(nullable bool, typeName string, schema *types.Schema, schemas
 func getTypeMap(schema *types.Schema, schemas *types.Schemas) map[string]fieldInfo {
 	result := map[string]fieldInfo{}
 	for name, field := range schema.ResourceFields {
+		if strings.EqualFold(name, "id") {
+			continue
+		}
 		result[field.CodeName] = fieldInfo{
 			Name: name,
 			Type: getGoType(field, schema, schemas),
@@ -221,7 +224,7 @@ func generateScheme(external bool, outputDir string, version *types.APIVersion, 
 		if !external {
 			names = append(names, schema.CodeName)
 		}
-		if schema.CanList() {
+		if schema.CanList(nil) {
 			names = append(names, schema.CodeName+"List")
 		}
 	}

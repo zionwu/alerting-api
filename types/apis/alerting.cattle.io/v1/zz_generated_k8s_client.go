@@ -15,6 +15,7 @@ type Interface interface {
 	controller.Starter
 
 	NotifiersGetter
+	AlertsGetter
 }
 
 type Client struct {
@@ -23,6 +24,7 @@ type Client struct {
 	starters   []controller.Starter
 
 	notifierControllers map[string]NotifierController
+	alertControllers    map[string]AlertController
 }
 
 func NewForConfig(config rest.Config) (Interface, error) {
@@ -40,6 +42,7 @@ func NewForConfig(config rest.Config) (Interface, error) {
 		restClient: restClient,
 
 		notifierControllers: map[string]NotifierController{},
+		alertControllers:    map[string]AlertController{},
 	}, nil
 }
 
@@ -62,6 +65,19 @@ type NotifiersGetter interface {
 func (c *Client) Notifiers(namespace string) NotifierInterface {
 	objectClient := clientbase.NewObjectClient(namespace, c.restClient, &NotifierResource, NotifierGroupVersionKind, notifierFactory{})
 	return &notifierClient{
+		ns:           namespace,
+		client:       c,
+		objectClient: objectClient,
+	}
+}
+
+type AlertsGetter interface {
+	Alerts(namespace string) AlertInterface
+}
+
+func (c *Client) Alerts(namespace string) AlertInterface {
+	objectClient := clientbase.NewObjectClient(namespace, c.restClient, &AlertResource, AlertGroupVersionKind, alertFactory{})
+	return &alertClient{
 		ns:           namespace,
 		client:       c,
 		objectClient: objectClient,

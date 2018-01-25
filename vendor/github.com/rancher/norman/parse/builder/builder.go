@@ -8,18 +8,25 @@ import (
 	"github.com/rancher/norman/types"
 	"github.com/rancher/norman/types/convert"
 	"github.com/rancher/norman/types/definition"
+	"k8s.io/apimachinery/pkg/util/validation"
 )
 
 var (
-	Create = Operation("create")
-	Update = Operation("update")
-	Action = Operation("action")
-	List   = Operation("list")
+	Create        = Operation("create")
+	Update        = Operation("update")
+	Action        = Operation("action")
+	List          = Operation("list")
+	ListForCreate = Operation("listcreate")
 )
 
 type Operation string
 
+func (o Operation) IsList() bool {
+	return strings.HasPrefix(string(o), "list")
+}
+
 type Builder struct {
+	apiContext   *types.APIContext
 	Version      *types.APIVersion
 	Schemas      *types.Schemas
 	RefValidator types.ReferenceValidator
@@ -27,6 +34,7 @@ type Builder struct {
 
 func NewBuilder(apiRequest *types.APIContext) *Builder {
 	return &Builder{
+		apiContext:   apiRequest,
 		Version:      apiRequest.Version,
 		Schemas:      apiRequest.Schemas,
 		RefValidator: apiRequest.ReferenceValidator,
@@ -34,7 +42,16 @@ func NewBuilder(apiRequest *types.APIContext) *Builder {
 }
 
 func (b *Builder) Construct(schema *types.Schema, input map[string]interface{}, op Operation) (map[string]interface{}, error) {
-	return b.copyFields(schema, input, op)
+	result, err := b.copyFields(schema, input, op)
+	if err != nil {
+		return nil, err
+	}
+	if (op == Create || op == Update) && schema.Validator != nil {
+		if err := schema.Validator(b.apiContext, schema, result); err != nil {
+			return nil, err
+		}
+	}
+	return result, nil
 }
 
 func (b *Builder) copyInputs(schema *types.Schema, input map[string]interface{}, op Operation, result map[string]interface{}) error {
@@ -55,7 +72,7 @@ func (b *Builder) copyInputs(schema *types.Schema, input map[string]interface{},
 		}
 
 		if value != nil || wasNull {
-			if op != List {
+			if !op.IsList() {
 				if slice, ok := value.([]interface{}); ok {
 					for _, sliceValue := range slice {
 						if sliceValue == nil {
@@ -73,7 +90,7 @@ func (b *Builder) copyInputs(schema *types.Schema, input map[string]interface{},
 			}
 			result[fieldName] = value
 
-			if op == List && field.Type == "date" && value != "" {
+			if op.IsList() && field.Type == "date" && value != "" {
 				ts, err := convert.ToTimestamp(value)
 				if err == nil {
 					result[fieldName+"TS"] = ts
@@ -82,7 +99,7 @@ func (b *Builder) copyInputs(schema *types.Schema, input map[string]interface{},
 		}
 	}
 
-	if op == List {
+	if op.IsList() {
 		if !convert.IsEmpty(input["type"]) {
 			result["type"] = input["type"]
 		}
@@ -118,7 +135,7 @@ func (b *Builder) checkDefaultAndRequired(schema *types.Schema, input map[string
 			}
 		}
 
-		if op == List && fieldMatchesOp(field, List) && definition.IsReferenceType(field.Type) && !hasKey {
+		if op.IsList() && fieldMatchesOp(field, List) && definition.IsReferenceType(field.Type) && !hasKey {
 			result[fieldName] = nil
 		}
 	}
@@ -151,7 +168,9 @@ func checkFieldCriteria(fieldName string, field types.Field, value interface{}) 
 	}
 
 	if (value == nil || value == "") && !field.Nullable {
-		return httperror.NewFieldAPIError(httperror.NotNullable, fieldName, "")
+		if field.Default == nil {
+			return httperror.NewFieldAPIError(httperror.NotNullable, fieldName, "")
+		}
 	}
 
 	if isNum {
@@ -240,7 +259,17 @@ func (b *Builder) convert(fieldType string, value interface{}, op Operation) (in
 	case "string":
 		return convert.ToString(value), nil
 	case "dnsLabel":
-		return convert.ToString(value), nil
+		str := convert.ToString(value)
+		if str == "" {
+			return "", nil
+		}
+		if op == Create || op == Update {
+			if errs := validation.IsDNS1123Subdomain(str); len(errs) != 0 {
+				return value, httperror.NewAPIError(httperror.InvalidFormat, fmt.Sprintf("invalid value %s: %s", value,
+					strings.Join(errs, ",")))
+			}
+		}
+		return str, nil
 	case "intOrString":
 		num, err := convert.ToNumber(value)
 		if err == nil {
@@ -336,6 +365,8 @@ func fieldMatchesOp(field types.Field, op Operation) bool {
 		return field.Update
 	case List:
 		return !field.WriteOnly
+	case ListForCreate:
+		return true
 	default:
 		return false
 	}

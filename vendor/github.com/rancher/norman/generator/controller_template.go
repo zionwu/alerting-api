@@ -51,7 +51,8 @@ type {{.schema.CodeName}}Lister interface {
 type {{.schema.CodeName}}Controller interface {
 	Informer() cache.SharedIndexInformer
 	Lister() {{.schema.CodeName}}Lister
-	AddHandler(handler {{.schema.CodeName}}HandlerFunc)
+	AddHandler(name string, handler {{.schema.CodeName}}HandlerFunc)
+	AddClusterScopedHandler(name, clusterName string, handler {{.schema.CodeName}}HandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
 	Start(ctx context.Context, threadiness int) error
@@ -60,17 +61,19 @@ type {{.schema.CodeName}}Controller interface {
 type {{.schema.CodeName}}Interface interface {
     ObjectClient() *clientbase.ObjectClient
 	Create(*{{.prefix}}{{.schema.CodeName}}) (*{{.prefix}}{{.schema.CodeName}}, error)
-	GetNamespace(name, namespace string, opts metav1.GetOptions) (*{{.prefix}}{{.schema.CodeName}}, error)
+	GetNamespaced(namespace, name string, opts metav1.GetOptions) (*{{.prefix}}{{.schema.CodeName}}, error)
 	Get(name string, opts metav1.GetOptions) (*{{.prefix}}{{.schema.CodeName}}, error)
 	Update(*{{.prefix}}{{.schema.CodeName}}) (*{{.prefix}}{{.schema.CodeName}}, error)
 	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteNamespace(name, namespace string, options *metav1.DeleteOptions) error
+	DeleteNamespaced(namespace, name string, options *metav1.DeleteOptions) error
 	List(opts metav1.ListOptions) (*{{.schema.CodeName}}List, error)
 	Watch(opts metav1.ListOptions) (watch.Interface, error)
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() {{.schema.CodeName}}Controller
-	AddSyncHandler(sync {{.schema.CodeName}}HandlerFunc)
+	AddHandler(name string, sync {{.schema.CodeName}}HandlerFunc)
 	AddLifecycle(name string, lifecycle {{.schema.CodeName}}Lifecycle)
+	AddClusterScopedHandler(name, clusterName string, sync {{.schema.CodeName}}HandlerFunc)
+	AddClusterScopedLifecycle(name, clusterName string, lifecycle {{.schema.CodeName}}Lifecycle)
 }
 
 type {{.schema.ID}}Lister struct {
@@ -115,8 +118,8 @@ func (c *{{.schema.ID}}Controller) Lister() {{.schema.CodeName}}Lister {
 }
 
 
-func (c *{{.schema.ID}}Controller) AddHandler(handler {{.schema.CodeName}}HandlerFunc) {
-	c.GenericController.AddHandler(func(key string) error {
+func (c *{{.schema.ID}}Controller) AddHandler(name string, handler {{.schema.CodeName}}HandlerFunc) {
+	c.GenericController.AddHandler(name, func(key string) error {
 		obj, exists, err := c.Informer().GetStore().GetByKey(key)
 		if err != nil {
 			return err
@@ -124,6 +127,24 @@ func (c *{{.schema.ID}}Controller) AddHandler(handler {{.schema.CodeName}}Handle
 		if !exists {
 			return handler(key, nil)
 		}
+		return handler(key, obj.(*{{.prefix}}{{.schema.CodeName}}))
+	})
+}
+
+func (c *{{.schema.ID}}Controller) AddClusterScopedHandler(name, cluster string, handler {{.schema.CodeName}}HandlerFunc) {
+	c.GenericController.AddHandler(name, func(key string) error {
+		obj, exists, err := c.Informer().GetStore().GetByKey(key)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return handler(key, nil)
+		}
+
+		if !controller.ObjectInCluster(cluster, obj) {
+			return nil
+		}
+
 		return handler(key, obj.(*{{.prefix}}{{.schema.CodeName}}))
 	})
 }
@@ -182,8 +203,8 @@ func (s *{{.schema.ID}}Client) Get(name string, opts metav1.GetOptions) (*{{.pre
 	return obj.(*{{.prefix}}{{.schema.CodeName}}), err
 }
 
-func (s *{{.schema.ID}}Client) GetNamespace(name, namespace string, opts metav1.GetOptions) (*{{.prefix}}{{.schema.CodeName}}, error) {
-	obj, err := s.objectClient.GetNamespace(name, namespace, opts)
+func (s *{{.schema.ID}}Client) GetNamespaced(namespace, name string, opts metav1.GetOptions) (*{{.prefix}}{{.schema.CodeName}}, error) {
+	obj, err := s.objectClient.GetNamespaced(namespace, name, opts)
 	return obj.(*{{.prefix}}{{.schema.CodeName}}), err
 }
 
@@ -196,8 +217,8 @@ func (s *{{.schema.ID}}Client) Delete(name string, options *metav1.DeleteOptions
 	return s.objectClient.Delete(name, options)
 }
 
-func (s *{{.schema.ID}}Client) DeleteNamespace(name, namespace string, options *metav1.DeleteOptions) error {
-	return s.objectClient.DeleteNamespace(name, namespace, options)
+func (s *{{.schema.ID}}Client) DeleteNamespaced(namespace, name string, options *metav1.DeleteOptions) error {
+	return s.objectClient.DeleteNamespaced(namespace, name, options)
 }
 
 func (s *{{.schema.ID}}Client) List(opts metav1.ListOptions) (*{{.schema.CodeName}}List, error) {
@@ -219,12 +240,21 @@ func (s *{{.schema.ID}}Client) DeleteCollection(deleteOpts *metav1.DeleteOptions
 	return s.objectClient.DeleteCollection(deleteOpts, listOpts)
 }
 
-func (s *{{.schema.ID}}Client) AddSyncHandler(sync {{.schema.CodeName}}HandlerFunc) {
-	s.Controller().AddHandler(sync)
+func (s *{{.schema.ID}}Client) AddHandler(name string, sync {{.schema.CodeName}}HandlerFunc) {
+	s.Controller().AddHandler(name, sync)
 }
 
 func (s *{{.schema.ID}}Client) AddLifecycle(name string, lifecycle {{.schema.CodeName}}Lifecycle) {
-	sync := New{{.schema.CodeName}}LifecycleAdapter(name, s, lifecycle)
-	s.AddSyncHandler(sync)
+	sync := New{{.schema.CodeName}}LifecycleAdapter(name, false, s, lifecycle)
+	s.AddHandler(name, sync)
+}
+
+func (s *{{.schema.ID}}Client) AddClusterScopedHandler(name, clusterName string, sync {{.schema.CodeName}}HandlerFunc) {
+	s.Controller().AddClusterScopedHandler(name, clusterName, sync)
+}
+
+func (s *{{.schema.ID}}Client) AddClusterScopedLifecycle(name, clusterName string, lifecycle {{.schema.CodeName}}Lifecycle) {
+	sync := New{{.schema.CodeName}}LifecycleAdapter(name+"_"+clusterName, true, s, lifecycle)
+	s.AddClusterScopedHandler(name, clusterName, sync)
 }
 `

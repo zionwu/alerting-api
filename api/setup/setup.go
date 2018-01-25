@@ -3,16 +3,17 @@ package setup
 import (
 	"context"
 
+	"github.com/rancher/alerting-api/api/alert"
 	"github.com/rancher/alerting-api/api/notifier"
 
+	"github.com/rancher/alerting-api/store/scoped"
 	alertingSchema "github.com/rancher/alerting-api/types/apis/alerting.cattle.io/v1/schema"
+	"github.com/rancher/alerting-api/types/client/alerting/v1"
 	"github.com/rancher/alerting-api/types/config"
 	"github.com/rancher/norman/api/builtin"
 	"github.com/rancher/norman/pkg/subscribe"
 	"github.com/rancher/norman/store/crd"
 	"github.com/rancher/norman/types"
-	"github.com/rancher/alerting-api/types/client/alerting/v1"
-	
 )
 
 var (
@@ -25,6 +26,7 @@ func Schemas(ctx context.Context, alerting *config.AlertingContext) error {
 	schemas := alerting.Schemas
 	subscribe.Register(&builtin.Version, schemas)
 	Notifier(schemas)
+	Alert(schemas, alerting)
 
 	crdStore, err := crd.NewCRDStoreFromConfig(alerting.RESTConfig)
 	if err != nil {
@@ -42,12 +44,11 @@ func Schemas(ctx context.Context, alerting *config.AlertingContext) error {
 		return err
 	}
 
-	//NamespacedTypes(schemas)
+	NamespacedTypes(schemas)
 
 	return nil
 }
 
-/*
 func NamespacedTypes(schemas *types.Schemas) {
 	for _, version := range crdVersions {
 		for _, schema := range schemas.SchemasForVersion(*version) {
@@ -73,18 +74,20 @@ func NamespacedTypes(schemas *types.Schemas) {
 		}
 	}
 }
-*/
 
 func Notifier(schemas *types.Schemas) {
 	schema := schemas.Schema(&alertingSchema.Version, client.NotifierType)
-	schema.ResourceActions = map[string]types.Action{
-		"update":  {},
-		"remove":  {},
-		"approve": {},
-		"deny":    {},
-		"rerun":   {},
-		"stop":    {},
-	}
 	schema.Formatter = notifier.Formatter
 	schema.ActionHandler = notifier.ActionHandler
+}
+
+func Alert(schemas *types.Schemas, alerting *config.AlertingContext) {
+	schema := schemas.Schema(&alertingSchema.Version, client.AlertType)
+	schema.Formatter = alert.Formatter
+
+	handler := &alert.Handler{
+		AlertContext: alerting,
+	}
+	schema.ActionHandler = handler.ActionHandler
+
 }

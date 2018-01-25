@@ -12,7 +12,7 @@ const (
 
 type EmailConfig struct {
 	Receiver     string `json:"receiver,omitempty"`
-	RequireTLS   string `json:"requireTLS,omitempty"`
+	RequireTLS   *bool  `json:"requireTLS,omitempty"`
 	SmtpHost     string `json:"smtpHost,omitempty"`
 	SmtpPassword string `json:"smtpPassword,omitempty"`
 	SmtpPort     string `json:"smtpPort,omitempty"`

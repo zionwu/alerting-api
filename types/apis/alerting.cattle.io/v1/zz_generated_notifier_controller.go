@@ -45,7 +45,8 @@ type NotifierLister interface {
 type NotifierController interface {
 	Informer() cache.SharedIndexInformer
 	Lister() NotifierLister
-	AddHandler(handler NotifierHandlerFunc)
+	AddHandler(name string, handler NotifierHandlerFunc)
+	AddClusterScopedHandler(name, clusterName string, handler NotifierHandlerFunc)
 	Enqueue(namespace, name string)
 	Sync(ctx context.Context) error
 	Start(ctx context.Context, threadiness int) error
@@ -54,17 +55,19 @@ type NotifierController interface {
 type NotifierInterface interface {
 	ObjectClient() *clientbase.ObjectClient
 	Create(*Notifier) (*Notifier, error)
-	GetNamespace(name, namespace string, opts metav1.GetOptions) (*Notifier, error)
+	GetNamespaced(namespace, name string, opts metav1.GetOptions) (*Notifier, error)
 	Get(name string, opts metav1.GetOptions) (*Notifier, error)
 	Update(*Notifier) (*Notifier, error)
 	Delete(name string, options *metav1.DeleteOptions) error
-	DeleteNamespace(name, namespace string, options *metav1.DeleteOptions) error
+	DeleteNamespaced(namespace, name string, options *metav1.DeleteOptions) error
 	List(opts metav1.ListOptions) (*NotifierList, error)
 	Watch(opts metav1.ListOptions) (watch.Interface, error)
 	DeleteCollection(deleteOpts *metav1.DeleteOptions, listOpts metav1.ListOptions) error
 	Controller() NotifierController
-	AddSyncHandler(sync NotifierHandlerFunc)
+	AddHandler(name string, sync NotifierHandlerFunc)
 	AddLifecycle(name string, lifecycle NotifierLifecycle)
+	AddClusterScopedHandler(name, clusterName string, sync NotifierHandlerFunc)
+	AddClusterScopedLifecycle(name, clusterName string, lifecycle NotifierLifecycle)
 }
 
 type notifierLister struct {
@@ -108,8 +111,8 @@ func (c *notifierController) Lister() NotifierLister {
 	}
 }
 
-func (c *notifierController) AddHandler(handler NotifierHandlerFunc) {
-	c.GenericController.AddHandler(func(key string) error {
+func (c *notifierController) AddHandler(name string, handler NotifierHandlerFunc) {
+	c.GenericController.AddHandler(name, func(key string) error {
 		obj, exists, err := c.Informer().GetStore().GetByKey(key)
 		if err != nil {
 			return err
@@ -117,6 +120,24 @@ func (c *notifierController) AddHandler(handler NotifierHandlerFunc) {
 		if !exists {
 			return handler(key, nil)
 		}
+		return handler(key, obj.(*Notifier))
+	})
+}
+
+func (c *notifierController) AddClusterScopedHandler(name, cluster string, handler NotifierHandlerFunc) {
+	c.GenericController.AddHandler(name, func(key string) error {
+		obj, exists, err := c.Informer().GetStore().GetByKey(key)
+		if err != nil {
+			return err
+		}
+		if !exists {
+			return handler(key, nil)
+		}
+
+		if !controller.ObjectInCluster(cluster, obj) {
+			return nil
+		}
+
 		return handler(key, obj.(*Notifier))
 	})
 }
@@ -175,8 +196,8 @@ func (s *notifierClient) Get(name string, opts metav1.GetOptions) (*Notifier, er
 	return obj.(*Notifier), err
 }
 
-func (s *notifierClient) GetNamespace(name, namespace string, opts metav1.GetOptions) (*Notifier, error) {
-	obj, err := s.objectClient.GetNamespace(name, namespace, opts)
+func (s *notifierClient) GetNamespaced(namespace, name string, opts metav1.GetOptions) (*Notifier, error) {
+	obj, err := s.objectClient.GetNamespaced(namespace, name, opts)
 	return obj.(*Notifier), err
 }
 
@@ -189,8 +210,8 @@ func (s *notifierClient) Delete(name string, options *metav1.DeleteOptions) erro
 	return s.objectClient.Delete(name, options)
 }
 
-func (s *notifierClient) DeleteNamespace(name, namespace string, options *metav1.DeleteOptions) error {
-	return s.objectClient.DeleteNamespace(name, namespace, options)
+func (s *notifierClient) DeleteNamespaced(namespace, name string, options *metav1.DeleteOptions) error {
+	return s.objectClient.DeleteNamespaced(namespace, name, options)
 }
 
 func (s *notifierClient) List(opts metav1.ListOptions) (*NotifierList, error) {
@@ -212,11 +233,20 @@ func (s *notifierClient) DeleteCollection(deleteOpts *metav1.DeleteOptions, list
 	return s.objectClient.DeleteCollection(deleteOpts, listOpts)
 }
 
-func (s *notifierClient) AddSyncHandler(sync NotifierHandlerFunc) {
-	s.Controller().AddHandler(sync)
+func (s *notifierClient) AddHandler(name string, sync NotifierHandlerFunc) {
+	s.Controller().AddHandler(name, sync)
 }
 
 func (s *notifierClient) AddLifecycle(name string, lifecycle NotifierLifecycle) {
-	sync := NewNotifierLifecycleAdapter(name, s, lifecycle)
-	s.AddSyncHandler(sync)
+	sync := NewNotifierLifecycleAdapter(name, false, s, lifecycle)
+	s.AddHandler(name, sync)
+}
+
+func (s *notifierClient) AddClusterScopedHandler(name, clusterName string, sync NotifierHandlerFunc) {
+	s.Controller().AddClusterScopedHandler(name, clusterName, sync)
+}
+
+func (s *notifierClient) AddClusterScopedLifecycle(name, clusterName string, lifecycle NotifierLifecycle) {
+	sync := NewNotifierLifecycleAdapter(name+"_"+clusterName, true, s, lifecycle)
+	s.AddClusterScopedHandler(name, clusterName, sync)
 }

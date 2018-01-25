@@ -64,6 +64,10 @@ func (j *JSONResponseWriter) writeMapSlice(builder *builder.Builder, apiContext 
 		}
 	}
 
+	if apiContext.Schema.CollectionFormatter != nil {
+		apiContext.Schema.CollectionFormatter(apiContext, collection)
+	}
+
 	return collection
 }
 
@@ -80,6 +84,11 @@ func (j *JSONResponseWriter) writeInterfaceSlice(builder *builder.Builder, apiCo
 			collection.Data = append(collection.Data, v)
 		}
 	}
+
+	if apiContext.Schema.CollectionFormatter != nil {
+		apiContext.Schema.CollectionFormatter(apiContext, collection)
+	}
+
 	return collection
 }
 
@@ -95,7 +104,11 @@ func (j *JSONResponseWriter) convert(b *builder.Builder, context *types.APIConte
 	if schema == nil {
 		return nil
 	}
-	data, err := b.Construct(schema, input, builder.List)
+	op := builder.List
+	if context.Method == http.MethodPost {
+		op = builder.ListForCreate
+	}
+	data, err := b.Construct(schema, input, op)
 	if err != nil {
 		logrus.Errorf("Failed to construct object on output: %v", err)
 		return nil
@@ -127,15 +140,15 @@ func (j *JSONResponseWriter) addLinks(b *builder.Builder, schema *types.Schema, 
 
 	self := context.URLBuilder.ResourceLink(rawResource)
 	rawResource.Links["self"] = self
-	if schema.CanUpdate() {
+	if context.AccessControl.CanUpdate(context, input, schema) {
 		rawResource.Links["update"] = self
 	}
-	if schema.CanDelete() {
+	if context.AccessControl.CanDelete(context, input, schema) {
 		rawResource.Links["remove"] = self
 	}
 
 	for _, backRef := range context.Schemas.References(schema) {
-		if !backRef.Schema.CanList() {
+		if !backRef.Schema.CanList(context) {
 			continue
 		}
 

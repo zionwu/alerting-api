@@ -8,6 +8,7 @@ type Client struct {
 	clientbase.APIBaseClient
 
 	Notifier NotifierOperations
+	Alert    AlertOperations
 }
 
 func NewClient(opts *clientbase.ClientOpts) (*Client, error) {
@@ -21,6 +22,7 @@ func NewClient(opts *clientbase.ClientOpts) (*Client, error) {
 	}
 
 	client.Notifier = newNotifierClient(client)
+	client.Alert = newAlertClient(client)
 
 	return client, nil
 }

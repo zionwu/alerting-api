@@ -39,9 +39,9 @@ func (w *notifierLifecycleAdapter) Updated(obj runtime.Object) (runtime.Object, 
 	return o, err
 }
 
-func NewNotifierLifecycleAdapter(name string, client NotifierInterface, l NotifierLifecycle) NotifierHandlerFunc {
+func NewNotifierLifecycleAdapter(name string, clusterScoped bool, client NotifierInterface, l NotifierLifecycle) NotifierHandlerFunc {
 	adapter := &notifierLifecycleAdapter{lifecycle: l}
-	syncFn := lifecycle.NewObjectLifecycleAdapter(name, adapter, client.ObjectClient())
+	syncFn := lifecycle.NewObjectLifecycleAdapter(name, clusterScoped, adapter, client.ObjectClient())
 	return func(key string, obj *Notifier) error {
 		if obj == nil {
 			return syncFn(key, nil)
