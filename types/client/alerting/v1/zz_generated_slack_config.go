@@ -1,12 +1,12 @@
 package client
 
 const (
-	SlackConfigType            = "slackConfig"
-	SlackConfigFieldChannel    = "channel"
-	SlackConfigFieldWebhookURL = "webhookURL"
+	SlackConfigType         = "slackConfig"
+	SlackConfigFieldChannel = "channel"
+	SlackConfigFieldURL     = "url"
 )
 
 type SlackConfig struct {
-	Channel    string `json:"channel,omitempty"`
-	WebhookURL string `json:"webhookURL,omitempty"`
+	Channel string `json:"channel,omitempty"`
+	URL     string `json:"url,omitempty"`
 }

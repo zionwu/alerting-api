@@ -13,33 +13,46 @@ type Alert struct {
 	// https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	DisplayName    string            `json:"displayName,omitempty"`
-	Description    string            `json:"description,omitempty"`
-	Severity       string            `json:"severity,omitempty"`
-	NotifierId     string            `json:"notifierId,omitempty" norman:"type=reference[notifier]"`
-	InitialWait    string            `json:"initialWait,omitempty"`
-	RepeatInterval string            `json:"repeatInterval,omitempty"`
-	TargetType     string            `json:"targetType,omitempty"`
-	TargetID       string            `json:"targetID,omitempty"`
-	TargetSelector map[string]string `json:"targetSelector,omitempty"`
-	StartedAt      string            `json:"startedAt,omitempty"`
+	DisplayName           string `json:"displayName,omitempty"`
+	Description           string `json:"description,omitempty"`
+	Severity              string `json:"severity,omitempty"`
+	NotifierId            string `json:"notifierId,omitempty" norman:"type=reference[notifier]"`
+	InitialWaitSeconds    int    `json:"initialWaitSeconds,omitempty"`
+	RepeatIntervalSeconds int    `json:"repeatIntervalSeconds,omitempty"`
+
+	StartedAt string `json:"startedAt,omitempty"`
 	//TODO: status/state not working
-	AlertState   string       `json:"alertState,omitempty"`
-	NodeRule     NodeRule     `json:"nodeRule,omitempty"`
-	PodRule      PodRule      `json:"podRule,omitempty"`
-	WorkloadRule WorkloadRule `json:"workloadRule,omitempty"`
+	AlertState string `json:"alertState,omitempty"`
+
+	TargetWorkload      TargetWorkload      `json:"targetWorkload,omitempty"`
+	TargetPod           TargetPod           `json:"targetPod,omitempty"`
+	TargetNode          TargetNode          `json:"targetNode,omitempty"`
+	TargetSystemService TargetSystemService `json:"targetSystemService,omitempty"`
 }
 
 //TODO: what node rule should we support
-type NodeRule struct {
+type TargetNode struct {
+	ID            string            `json:"id,omitempty"`
+	Selector      map[string]string `json:"seletor,omitempty"`
+	IsReady       bool              `json:"isReady,omitempty"`
+	DiskThreshold int               `json:"diskThreshold,omitempty"`
+	MemThreshold  int               `json:"diskThreshold,omitempty"`
+	CPUThreshold  int               `json:"diskThreshold,omitempty"`
 }
 
-//TODO: precam rule
-
-type PodRule struct {
-	Unhealthy bool `json:"unhealthy,omitempty"`
+type TargetPod struct {
+	ID          string `json:"id,omitempty"`
+	IsRunning   bool   `json:"isRunning,omitempty"`
+	IsScheduled bool   `json:"isScheduled,omitempty"`
+	RestartTime int    `json:"restartTime,omitempty"`
 }
 
-type WorkloadRule struct {
-	UnavailablePercentage int `json:"unavailablePercentage,omitempty"`
+type TargetWorkload struct {
+	ID                    string            `json:"id,omitempty"`
+	Selector              map[string]string `json:"seletor,omitempty"`
+	UnavailablePercentage int               `json:"unavailablePercentage,omitempty"`
+}
+
+type TargetSystemService struct {
+	Type string `json:"type,omitempty"`
 }

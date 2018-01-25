@@ -11,7 +11,6 @@ const (
 	NotifierFieldCreatorID       = "creatorId"
 	NotifierFieldDescription     = "description"
 	NotifierFieldDisplayName     = "displayName"
-	NotifierFieldEmailConfig     = "emailConfig"
 	NotifierFieldLabels          = "labels"
 	NotifierFieldName            = "name"
 	NotifierFieldNamespaceId     = "namespaceId"
@@ -19,6 +18,7 @@ const (
 	NotifierFieldPagerdutyConfig = "pagerdutyConfig"
 	NotifierFieldRemoved         = "removed"
 	NotifierFieldSlackConfig     = "slackConfig"
+	NotifierFieldSmtpConfig      = "smtpConfig"
 	NotifierFieldUuid            = "uuid"
 	NotifierFieldWebhookConfig   = "webhookConfig"
 )
@@ -30,7 +30,6 @@ type Notifier struct {
 	CreatorID       string            `json:"creatorId,omitempty"`
 	Description     string            `json:"description,omitempty"`
 	DisplayName     string            `json:"displayName,omitempty"`
-	EmailConfig     *EmailConfig      `json:"emailConfig,omitempty"`
 	Labels          map[string]string `json:"labels,omitempty"`
 	Name            string            `json:"name,omitempty"`
 	NamespaceId     string            `json:"namespaceId,omitempty"`
@@ -38,6 +37,7 @@ type Notifier struct {
 	PagerdutyConfig *PagerdutyConfig  `json:"pagerdutyConfig,omitempty"`
 	Removed         string            `json:"removed,omitempty"`
 	SlackConfig     *SlackConfig      `json:"slackConfig,omitempty"`
+	SmtpConfig      *SmtpConfig       `json:"smtpConfig,omitempty"`
 	Uuid            string            `json:"uuid,omitempty"`
 	WebhookConfig   *WebhookConfig    `json:"webhookConfig,omitempty"`
 }

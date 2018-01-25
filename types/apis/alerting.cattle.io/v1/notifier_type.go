@@ -15,24 +15,24 @@ type Notifier struct {
 
 	DisplayName     string           `json:"displayName,omitempty"`
 	Description     string           `json:"description,omitempty"`
-	EmailConfig     *EmailConfig     `json:"emailConfig,omitempty"`
+	SmtpConfig      *SmtpConfig      `json:"smtpConfig,omitempty"`
 	SlackConfig     *SlackConfig     `json:"slackConfig,omitempty"`
 	PagerdutyConfig *PagerdutyConfig `json:"pagerdutyConfig,omitempty"`
 	WebhookConfig   *WebhookConfig   `json:"webhookConfig,omitempty"`
 }
 
-type EmailConfig struct {
-	SmtpHost     string `json:"smtpHost,omitempty"`
-	SmtpPort     string `json:"smtpPort,omitempty"`
-	SmtpUsername string `json:"smtpUsername,omitempty"`
-	SmtpPassword string `json:"smtpPassword,omitempty"`
-	Receiver     string `json:"receiver,omitempty"`
-	RequireTLS   bool   `json:"requireTLS,omitempty"`
+type SmtpConfig struct {
+	Host             string `json:"host,omitempty"`
+	Port             int    `json:"port,omitempty"`
+	Username         string `json:"username,omitempty"`
+	Password         string `json:"password,omitempty"`
+	DefaultRecipient string `json:"defaultRecipient,omitempty"`
+	TLS              bool   `json:"tls,omitempty"`
 }
 
 type SlackConfig struct {
-	WebhookURL string `json:"webhookURL,omitempty"`
-	Channel    string `json:"channel,omitempty"`
+	URL     string `json:"url,omitempty"`
+	Channel string `json:"channel,omitempty"`
 }
 
 type PagerdutyConfig struct {

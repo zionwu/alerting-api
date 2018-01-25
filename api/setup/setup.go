@@ -78,6 +78,7 @@ func NamespacedTypes(schemas *types.Schemas) {
 func Notifier(schemas *types.Schemas) {
 	schema := schemas.Schema(&alertingSchema.Version, client.NotifierType)
 	schema.Formatter = notifier.Formatter
+	schema.CollectionFormatter = notifier.CollectionFormatter
 	schema.ActionHandler = notifier.ActionHandler
 }
 

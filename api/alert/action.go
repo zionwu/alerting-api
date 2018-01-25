@@ -12,10 +12,10 @@ import (
 )
 
 func Formatter(apiContext *types.APIContext, resource *types.RawResource) {
-	resource.Actions["activate"] = apiContext.URLBuilder.Action("activate", resource)
-	resource.Actions["deactivate"] = apiContext.URLBuilder.Action("deactivate", resource)
-	resource.Actions["mute"] = apiContext.URLBuilder.Action("mute", resource)
-	resource.Actions["unmute"] = apiContext.URLBuilder.Action("unmute", resource)
+	resource.AddAction(apiContext, "activate")
+	resource.AddAction(apiContext, "deactivate")
+	resource.AddAction(apiContext, "mute")
+	resource.AddAction(apiContext, "unmute")
 
 }
 
