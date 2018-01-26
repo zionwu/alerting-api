@@ -15,7 +15,7 @@ const (
 	AlertFieldLabels                = "labels"
 	AlertFieldName                  = "name"
 	AlertFieldNamespaceId           = "namespaceId"
-	AlertFieldNotifierId            = "notifierId"
+	AlertFieldNotifierList          = "notifier"
 	AlertFieldOwnerReferences       = "ownerReferences"
 	AlertFieldRemoved               = "removed"
 	AlertFieldRepeatIntervalSeconds = "repeatIntervalSeconds"
@@ -39,7 +39,7 @@ type Alert struct {
 	Labels                map[string]string    `json:"labels,omitempty"`
 	Name                  string               `json:"name,omitempty"`
 	NamespaceId           string               `json:"namespaceId,omitempty"`
-	NotifierId            string               `json:"notifierId,omitempty"`
+	NotifierList          *Recipient           `json:"notifier,omitempty"`
 	OwnerReferences       []OwnerReference     `json:"ownerReferences,omitempty"`
 	Removed               string               `json:"removed,omitempty"`
 	RepeatIntervalSeconds *int64               `json:"repeatIntervalSeconds,omitempty"`

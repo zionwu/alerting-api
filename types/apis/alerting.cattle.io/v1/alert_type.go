@@ -13,12 +13,12 @@ type Alert struct {
 	// https://github.com/kubernetes/community/blob/master/contributors/devel/api-conventions.md#metadata
 	metav1.ObjectMeta `json:"metadata,omitempty"`
 
-	DisplayName           string `json:"displayName,omitempty"`
-	Description           string `json:"description,omitempty"`
-	Severity              string `json:"severity,omitempty"`
-	NotifierId            string `json:"notifierId,omitempty" norman:"type=reference[notifier]"`
-	InitialWaitSeconds    int    `json:"initialWaitSeconds,omitempty"`
-	RepeatIntervalSeconds int    `json:"repeatIntervalSeconds,omitempty"`
+	DisplayName           string    `json:"displayName,omitempty"`
+	Description           string    `json:"description,omitempty"`
+	Severity              string    `json:"severity,omitempty"`
+	NotifierList          Recipient `json:"notifier,omitempty"`
+	InitialWaitSeconds    int       `json:"initialWaitSeconds,omitempty"`
+	RepeatIntervalSeconds int       `json:"repeatIntervalSeconds,omitempty"`
 
 	StartedAt string `json:"startedAt,omitempty"`
 	//TODO: status/state not working
@@ -28,6 +28,11 @@ type Alert struct {
 	TargetPod           TargetPod           `json:"targetPod,omitempty"`
 	TargetNode          TargetNode          `json:"targetNode,omitempty"`
 	TargetSystemService TargetSystemService `json:"targetSystemService,omitempty"`
+}
+
+type Recipient struct {
+	Recipient  string `json:"recipient,omitempty"`
+	NotifierId string `json:"notifierId,omitempty" norman:"type=reference[notifier]"`
 }
 
 //TODO: what node rule should we support

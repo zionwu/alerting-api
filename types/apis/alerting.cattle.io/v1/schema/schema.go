@@ -106,12 +106,6 @@ func alertingTypes(schemas *types.Schemas) *types.Schemas {
 				return field
 			})
 
-			schema.MustCustomizeField("notifierId", func(field types.Field) types.Field {
-				field.Nullable = false
-				field.Required = true
-				return field
-			})
-
 			schema.MustCustomizeField("alertState", func(field types.Field) types.Field {
 				field.Create = false
 				field.Update = false
@@ -138,6 +132,13 @@ func alertingTypes(schemas *types.Schemas) *types.Schemas {
 			schema.MustCustomizeField("type", func(field types.Field) types.Field {
 				field.Type = "enum"
 				field.Options = []string{"dns", "etcd", "controller manager", "scheduler", "network"}
+				field.Nullable = false
+				field.Required = true
+				return field
+			})
+		}).
+		MustImportAndCustomize(&Version, v1.Recipient{}, func(schema *types.Schema) {
+			schema.MustCustomizeField("notifierId", func(field types.Field) types.Field {
 				field.Nullable = false
 				field.Required = true
 				return field
