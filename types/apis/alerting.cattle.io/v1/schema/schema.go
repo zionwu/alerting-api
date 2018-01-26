@@ -3,6 +3,7 @@ package schema
 import (
 	"github.com/rancher/alerting-api/types/apis/alerting.cattle.io/v1"
 	"github.com/rancher/norman/types"
+	m "github.com/rancher/norman/types/mapper"
 	"github.com/rancher/types/factory"
 	"github.com/rancher/types/mapper"
 )
@@ -25,6 +26,7 @@ func alertingTypes(schemas *types.Schemas) *types.Schemas {
 	return schemas.
 		AddMapperForType(&Version, v1.Notifier{},
 			&mapper.NamespaceIDMapper{},
+			&m.DisplayName{},
 			//		&m.Move{From: "displayName", To: "name"},
 			//		&m.Move{From: "metadata/name", To: "id"}
 		).
@@ -33,11 +35,6 @@ func alertingTypes(schemas *types.Schemas) *types.Schemas {
 				//Add a message body as input
 				"send": {},
 			}
-			schema.MustCustomizeField("displayName", func(field types.Field) types.Field {
-				field.Nullable = false
-				field.Required = true
-				return field
-			})
 		}).
 		MustImportAndCustomize(&Version, v1.SmtpConfig{}, func(schema *types.Schema) {
 			schema.MustCustomizeField("host", func(field types.Field) types.Field {
@@ -49,8 +46,10 @@ func alertingTypes(schemas *types.Schemas) *types.Schemas {
 			schema.MustCustomizeField("port", func(field types.Field) types.Field {
 				field.Nullable = false
 				field.Required = true
-				//*field.Max = 65535
-				//*field.Min = 1
+				min := int64(1)
+				max := int64(65535)
+				field.Min = &min
+				field.Max = &max
 				return field
 			})
 			schema.MustCustomizeField("username", func(field types.Field) types.Field {
@@ -94,15 +93,11 @@ func alertingTypes(schemas *types.Schemas) *types.Schemas {
 		}).
 		AddMapperForType(&Version, v1.Alert{},
 			&mapper.NamespaceIDMapper{},
+			&m.DisplayName{},
 			//		&m.Move{From: "displayName", To: "name"},
 			//		&m.Move{From: "metadata/name", To: "id"}
 		).
 		MustImportAndCustomize(&Version, v1.Alert{}, func(schema *types.Schema) {
-			schema.MustCustomizeField("displayName", func(field types.Field) types.Field {
-				field.Nullable = false
-				field.Required = true
-				return field
-			})
 
 			schema.MustCustomizeField("severity", func(field types.Field) types.Field {
 				field.Type = "enum"
@@ -152,8 +147,10 @@ func alertingTypes(schemas *types.Schemas) *types.Schemas {
 			schema.MustCustomizeField("unavailablePercentage", func(field types.Field) types.Field {
 				field.Nullable = false
 				field.Required = true
-				//*field.Min = 1
-				//*field.Max = 100
+				min := int64(1)
+				max := int64(100)
+				field.Min = &min
+				field.Max = &max
 				return field
 			})
 		}).

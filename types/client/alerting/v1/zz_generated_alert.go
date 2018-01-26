@@ -11,7 +11,6 @@ const (
 	AlertFieldCreated               = "created"
 	AlertFieldCreatorID             = "creatorId"
 	AlertFieldDescription           = "description"
-	AlertFieldDisplayName           = "displayName"
 	AlertFieldInitialWaitSeconds    = "initialWaitSeconds"
 	AlertFieldLabels                = "labels"
 	AlertFieldName                  = "name"
@@ -36,7 +35,6 @@ type Alert struct {
 	Created               string               `json:"created,omitempty"`
 	CreatorID             string               `json:"creatorId,omitempty"`
 	Description           string               `json:"description,omitempty"`
-	DisplayName           string               `json:"displayName,omitempty"`
 	InitialWaitSeconds    *int64               `json:"initialWaitSeconds,omitempty"`
 	Labels                map[string]string    `json:"labels,omitempty"`
 	Name                  string               `json:"name,omitempty"`
